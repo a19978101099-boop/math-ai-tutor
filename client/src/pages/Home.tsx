@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { BookOpen, Sparkles } from "lucide-react";
+import { BookOpen, Sparkles, BarChart3 } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -94,6 +94,12 @@ export default function Home() {
             <span className="text-sm text-muted-foreground">
               {user?.name || user?.email}
             </span>
+            <Link href="/progress">
+              <Button variant="outline" size="sm" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                学习进度
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"

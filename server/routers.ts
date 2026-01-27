@@ -262,6 +262,58 @@ ${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
 
         return { hint };
       }),
+
+    // Record problem view
+    recordView: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { incrementViewCount } = await import("./db");
+        await incrementViewCount(ctx.user.openId, input.problemId);
+        return { success: true };
+      }),
+
+    // Record hint request
+    recordHint: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { incrementHintCount } = await import("./db");
+        await incrementHintCount(ctx.user.openId, input.problemId);
+        return { success: true };
+      }),
+
+    // Record condition click
+    recordConditionClick: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { incrementConditionClickCount } = await import("./db");
+        await incrementConditionClickCount(ctx.user.openId, input.problemId);
+        return { success: true };
+      }),
+
+    // Update steps revealed count
+    recordStepsRevealed: protectedProcedure
+      .input(z.object({ problemId: z.number(), count: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { updateStepsRevealed } = await import("./db");
+        await updateStepsRevealed(ctx.user.openId, input.problemId, input.count);
+        return { success: true };
+      }),
+
+    // Mark solution as viewed
+    recordSolutionView: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { markSolutionViewed } = await import("./db");
+        await markSolutionViewed(ctx.user.openId, input.problemId);
+        return { success: true };
+      }),
+
+    // Get user progress statistics
+    getProgress: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserProgressStats } = await import("./db");
+        return await getUserProgressStats(ctx.user.openId);
+      }),
   }),
 });
 

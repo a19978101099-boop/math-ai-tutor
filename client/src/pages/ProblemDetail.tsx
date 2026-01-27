@@ -15,6 +15,11 @@ export default function ProblemDetail() {
 
   const { data: problem, isLoading } = trpc.problem.getById.useQuery({ id: problemId });
   const hintMutation = trpc.problem.hint.useMutation();
+  const recordViewMutation = trpc.problem.recordView.useMutation();
+  const recordHintMutation = trpc.problem.recordHint.useMutation();
+  const recordConditionClickMutation = trpc.problem.recordConditionClick.useMutation();
+  const recordStepsRevealedMutation = trpc.problem.recordStepsRevealed.useMutation();
+  const recordSolutionViewMutation = trpc.problem.recordSolutionView.useMutation();
 
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState<string>("");
@@ -56,6 +61,8 @@ export default function ProblemDetail() {
 
       if (typeof result.hint === "string") {
         setCurrentHint(result.hint);
+        // 记录提示请求
+        recordHintMutation.mutate({ problemId });
       }
     } catch (error) {
       toast.error("获取提示失败，请重试");
@@ -84,6 +91,8 @@ export default function ProblemDetail() {
 
       if (typeof result.hint === "string") {
         setCurrentHint(result.hint);
+        // 记录条件点击
+        recordConditionClickMutation.mutate({ problemId });
       }
     } catch (error) {
       toast.error("获取条件解释失败，请重试");
@@ -125,6 +134,13 @@ export default function ProblemDetail() {
     }
   };
 
+  // 记录页面查看
+  useEffect(() => {
+    if (problemId) {
+      recordViewMutation.mutate({ problemId });
+    }
+  }, [problemId]);
+
   // 清理语音
   useEffect(() => {
     return () => {
@@ -137,15 +153,20 @@ export default function ProblemDetail() {
   // 显示下一步
   const handleShowNextStep = () => {
     if (problem && visibleStepsCount < problem.steps.length) {
-      setVisibleStepsCount(prev => prev + 1);
+      const newCount = visibleStepsCount + 1;
+      setVisibleStepsCount(newCount);
+      // 记录步骤揭示
+      recordStepsRevealedMutation.mutate({ problemId, count: newCount });
     }
   };
 
-  // 显示所有步骤
+  // 显示全部步骤
   const handleShowAllSteps = () => {
     if (problem) {
       setShowAllSteps(true);
       setVisibleStepsCount(problem.steps.length);
+      // 记录步骤揭示
+      recordStepsRevealedMutation.mutate({ problemId, count: problem.steps.length });
     }
   };
 

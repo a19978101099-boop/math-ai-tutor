@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, problems, InsertProblem } from "../drizzle/schema";
+import { InsertUser, users, problems, InsertProblem, userProgress, InsertUserProgress } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { desc } from "drizzle-orm";
 
@@ -109,4 +109,129 @@ export async function getUserProblems(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(problems).where(eq(problems.userId, userId)).orderBy(desc(problems.createdAt));
+}
+
+// User progress queries
+export async function getOrCreateProgress(userId: string, problemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Try to find existing progress
+  const existing = await db
+    .select()
+    .from(userProgress)
+    .where(and(
+      eq(userProgress.userId, userId),
+      eq(userProgress.problemId, problemId)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    return existing[0];
+  }
+  
+  // Create new progress record
+  const result = await db.insert(userProgress).values({
+    userId,
+    problemId,
+    viewCount: 0,
+    hintCount: 0,
+    conditionClickCount: 0,
+    stepsRevealed: 0,
+    viewedSolution: 0,
+  });
+  
+  // Fetch the newly created record
+  const newRecord = await db
+    .select()
+    .from(userProgress)
+    .where(eq(userProgress.id, result[0].insertId))
+    .limit(1);
+  
+  return newRecord[0];
+}
+
+export async function incrementViewCount(userId: string, problemId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const progress = await getOrCreateProgress(userId, problemId);
+  await db
+    .update(userProgress)
+    .set({ viewCount: progress.viewCount + 1 })
+    .where(eq(userProgress.id, progress.id));
+}
+
+export async function incrementHintCount(userId: string, problemId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const progress = await getOrCreateProgress(userId, problemId);
+  await db
+    .update(userProgress)
+    .set({ hintCount: progress.hintCount + 1 })
+    .where(eq(userProgress.id, progress.id));
+}
+
+export async function incrementConditionClickCount(userId: string, problemId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const progress = await getOrCreateProgress(userId, problemId);
+  await db
+    .update(userProgress)
+    .set({ conditionClickCount: progress.conditionClickCount + 1 })
+    .where(eq(userProgress.id, progress.id));
+}
+
+export async function updateStepsRevealed(userId: string, problemId: number, count: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const progress = await getOrCreateProgress(userId, problemId);
+  if (count > progress.stepsRevealed) {
+    await db
+      .update(userProgress)
+      .set({ stepsRevealed: count })
+      .where(eq(userProgress.id, progress.id));
+  }
+}
+
+export async function markSolutionViewed(userId: string, problemId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const progress = await getOrCreateProgress(userId, problemId);
+  await db
+    .update(userProgress)
+    .set({ viewedSolution: 1 })
+    .where(eq(userProgress.id, progress.id));
+}
+
+export async function getUserProgressStats(userId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const progressRecords = await db
+    .select()
+    .from(userProgress)
+    .where(eq(userProgress.userId, userId));
+  
+  if (progressRecords.length === 0) {
+    return {
+      totalProblemsViewed: 0,
+      totalHintsRequested: 0,
+      totalConditionsClicked: 0,
+      totalStepsRevealed: 0,
+      totalSolutionsViewed: 0,
+    };
+  }
+  
+  return {
+    totalProblemsViewed: progressRecords.length,
+    totalHintsRequested: progressRecords.reduce((sum, p) => sum + p.hintCount, 0),
+    totalConditionsClicked: progressRecords.reduce((sum, p) => sum + p.conditionClickCount, 0),
+    totalStepsRevealed: progressRecords.reduce((sum, p) => sum + p.stepsRevealed, 0),
+    totalSolutionsViewed: progressRecords.reduce((sum, p) => sum + p.viewedSolution, 0),
+  };
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `user_progress` MODIFY COLUMN `userId` varchar(64) NOT NULL;

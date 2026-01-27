@@ -46,3 +46,27 @@ export const problems = mysqlTable("problems", {
 
 export type Problem = typeof problems.$inferSelect;
 export type InsertProblem = typeof problems.$inferInsert;
+
+/**
+ * User progress table: tracks learning activities
+ */
+export const userProgress = mysqlTable("user_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  problemId: int("problemId").notNull(),
+  /** Number of times the user viewed this problem */
+  viewCount: int("viewCount").default(0).notNull(),
+  /** Number of times the user requested hints for steps */
+  hintCount: int("hintCount").default(0).notNull(),
+  /** Number of times the user clicked on conditions */
+  conditionClickCount: int("conditionClickCount").default(0).notNull(),
+  /** Number of steps revealed by the user */
+  stepsRevealed: int("stepsRevealed").default(0).notNull(),
+  /** Whether the user has viewed the complete solution */
+  viewedSolution: int("viewedSolution").default(0).notNull(),
+  firstViewedAt: timestamp("firstViewedAt").defaultNow().notNull(),
+  lastViewedAt: timestamp("lastViewedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserProgress = typeof userProgress.$inferSelect;
+export type InsertUserProgress = typeof userProgress.$inferInsert;

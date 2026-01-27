@@ -22,6 +22,20 @@
       "when": 1769518664392,
       "tag": "0002_curious_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1769519959261,
+      "tag": "0003_married_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1769520549753,
+      "tag": "0004_whole_sabretooth",
+      "breakpoints": true
     }
   ]
 }
