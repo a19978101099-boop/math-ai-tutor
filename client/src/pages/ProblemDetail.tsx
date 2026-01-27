@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, HelpCircle, Lightbulb, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, HelpCircle, Lightbulb, Loader2, Volume2, Eye, EyeOff, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
 import "katex/dist/katex.min.css";
@@ -20,6 +20,9 @@ export default function ProblemDetail() {
   const [selectedText, setSelectedText] = useState<string>("");
   const [currentHint, setCurrentHint] = useState<string>("");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [visibleStepsCount, setVisibleStepsCount] = useState(1); // 渐进式显示步骤
+  const [showAllSteps, setShowAllSteps] = useState(false); // 是否显示所有步骤
+  const [isSpeaking, setIsSpeaking] = useState(false); // 语音播放状态
 
   const handleStepClick = (stepId: string) => {
     setSelectedStepId(stepId);
@@ -56,6 +59,70 @@ export default function ProblemDetail() {
       toast.error("获取提示失败，请重试");
       console.error(error);
     }
+  };
+
+  // 语音播放功能
+  const handleSpeak = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // 停止当前播放
+      window.speechSynthesis.cancel();
+      
+      if (isSpeaking) {
+        setIsSpeaking(false);
+        return;
+      }
+
+      // 移除 LaTeX 公式符号，只读文本
+      const cleanText = text.replace(/\$[^$]+\$/g, (match) => {
+        return match.slice(1, -1); // 保留公式内容但去掉 $
+      });
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.9; // 语速
+      utterance.pitch = 1; // 音调
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        toast.error('语音播放失败');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast.error('浏览器不支持语音功能');
+    }
+  };
+
+  // 清理语音
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // 显示下一步
+  const handleShowNextStep = () => {
+    if (problem && visibleStepsCount < problem.steps.length) {
+      setVisibleStepsCount(prev => prev + 1);
+    }
+  };
+
+  // 显示所有步骤
+  const handleShowAllSteps = () => {
+    if (problem) {
+      setShowAllSteps(true);
+      setVisibleStepsCount(problem.steps.length);
+    }
+  };
+
+  // 隐藏步骤
+  const handleHideSteps = () => {
+    setShowAllSteps(false);
+    setVisibleStepsCount(1);
   };
 
   if (isLoading) {
@@ -124,9 +191,33 @@ export default function ProblemDetail() {
 
             {/* 步骤列表 */}
             <div>
-              <h2 className="text-xl font-bold mb-4">解题步骤</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">解题步骤</h2>
+                <div className="flex gap-2">
+                  {!showAllSteps && visibleStepsCount < problem.steps.length && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShowAllSteps}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      查看全部步骤
+                    </Button>
+                  )}
+                  {showAllSteps && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleHideSteps}
+                    >
+                      <EyeOff className="w-4 h-4 mr-2" />
+                      隐藏步骤
+                    </Button>
+                  )}
+                </div>
+              </div>
               <div className="space-y-3">
-                {problem.steps.map((step, index) => (
+                {problem.steps.slice(0, visibleStepsCount).map((step, index) => (
                   <div
                     key={step.id}
                     className={`step-card ${selectedStepId === step.id ? "step-card-selected" : ""}`}
@@ -141,6 +232,16 @@ export default function ProblemDetail() {
                     </div>
                   </div>
                 ))}
+                {!showAllSteps && visibleStepsCount < problem.steps.length && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleShowNextStep}
+                  >
+                    <ChevronRight className="w-4 h-4 mr-2" />
+                    显示下一步 ({visibleStepsCount + 1}/{problem.steps.length})
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -207,7 +308,17 @@ export default function ProblemDetail() {
 
                       {currentHint && (
                         <div className="space-y-2">
-                          <p className="text-sm font-medium">AI 提示：</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">AI 提示：</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSpeak(currentHint)}
+                              className="h-8 px-2"
+                            >
+                              <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
+                            </Button>
+                          </div>
                           <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
                           </div>
@@ -279,7 +390,17 @@ export default function ProblemDetail() {
 
                 {currentHint && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">AI 提示：</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">AI 提示：</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSpeak(currentHint)}
+                        className="h-8 px-2"
+                      >
+                        <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
+                      </Button>
+                    </div>
                     <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
                     </div>
