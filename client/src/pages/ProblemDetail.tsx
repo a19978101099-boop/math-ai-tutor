@@ -432,7 +432,45 @@ export default function ProblemDetail() {
             </DrawerTitle>
           </DrawerHeader>
           <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            {selectedStep && (
+            {!selectedStepId && !selectedCondition ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                点击步骤卡片或已知条件开始获取 AI 提示
+              </p>
+            ) : selectedCondition ? (
+              <>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">选中条件：</p>
+                  <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
+                    {renderMathText(selectedCondition)}
+                  </p>
+                </div>
+
+                {hintMutation.isPending && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                )}
+
+                {currentHint && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">AI 解释：</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSpeak(currentHint)}
+                        className="h-8 px-2"
+                      >
+                        <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
+                      </Button>
+                    </div>
+                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : selectedStep && (
               <>
                 <div className="space-y-2">
                   <p className="text-sm font-medium">当前步骤：</p>
