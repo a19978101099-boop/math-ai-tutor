@@ -38,6 +38,8 @@ export const problems = mysqlTable("problems", {
   solutionImageKey: text("solutionImageKey"),
   /** JSON array of step objects: [{id: string, text: string}] */
   steps: text("steps").notNull(),
+  /** JSON array of condition strings: ["∠ABC = ∠AED", "AB = AE"] */
+  conditions: text("conditions"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

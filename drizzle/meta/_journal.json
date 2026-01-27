@@ -15,6 +15,13 @@
       "when": 1769509573954,
       "tag": "0001_magical_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769518664392,
+      "tag": "0002_curious_mauler",
+      "breakpoints": true
     }
   ]
 }

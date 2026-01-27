@@ -32,6 +32,7 @@ export const appRouter = router({
           id: z.string(),
           text: z.string(),
         })),
+        conditions: z.array(z.string()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { createProblem } = await import("./db");
@@ -43,6 +44,7 @@ export const appRouter = router({
           solutionImageUrl: input.solutionImageUrl,
           solutionImageKey: input.solutionImageKey,
           steps: JSON.stringify(input.steps),
+          conditions: input.conditions ? JSON.stringify(input.conditions) : null,
         });
         return { id: problemId };
       }),
@@ -69,6 +71,7 @@ export const appRouter = router({
         return {
           ...problem,
           steps: JSON.parse(problem.steps) as Array<{ id: string; text: string }>,
+          conditions: problem.conditions ? JSON.parse(problem.conditions) as string[] : [],
         };
       }),
 
@@ -87,12 +90,12 @@ export const appRouter = router({
         const messages: LLMMessage[] = [
           {
             role: "system",
-            content: "你是一个数学解题步骤提取专家。请仔细分析图片中的数学题目和解答过程，提取出清晰的解题步骤。每个步骤应该是一个独立的推理或计算过程。",
+            content: "你是一个数学解题步骤提取专家。请仔细分析图片中的数学题目和解答过程，提取出：1) 所有已知条件（如“∠ABC = ∠AED”、“AB = AE”）；2) 清晰的解题步骤。每个步骤应该是一个独立的推理或计算过程。",
           },
         ];
 
         const userContent: MessageContent[] = [
-          { type: "text", text: "请从以下图片中提取解题步骤。" },
+          { type: "text", text: "请从以下图片中提取：1) 所有已知条件（题目中明确给出的条件，如角度相等、边长相等、平行关系等）；2) 解题步骤。" },
         ];
 
         if (input.problemImageUrl) {
@@ -121,6 +124,13 @@ export const appRouter = router({
               schema: {
                 type: "object",
                 properties: {
+                  conditions: {
+                    type: "array",
+                    description: "已知条件列表",
+                    items: {
+                      type: "string",
+                    },
+                  },
                   steps: {
                     type: "array",
                     items: {
@@ -133,7 +143,7 @@ export const appRouter = router({
                     },
                   },
                 },
-                required: ["steps"],
+                required: ["conditions", "steps"],
                 additionalProperties: false,
               },
             },
@@ -148,8 +158,9 @@ export const appRouter = router({
           id: `step-${idx + 1}`,
           text: s.text,
         }));
+        const conditions = parsed.conditions || [];
 
-        return { steps };
+        return { steps, conditions };
       }),
 
     // Get AI hint for a specific step
@@ -161,26 +172,51 @@ export const appRouter = router({
           id: z.string(),
           text: z.string(),
         })),
-        selectedStepId: z.string(),
+        conditions: z.array(z.string()).optional(),
+        selectedStepId: z.string().optional(),
         selectedText: z.string().optional(),
-        mode: z.enum(["why", "next"]),
+        selectedCondition: z.string().optional(),
+        mode: z.enum(["why", "next", "explainCondition"]),
       }))
       .mutation(async ({ input }) => {
         const { invokeLLM } = await import("./_core/llm");
 
-        const selectedStepIndex = input.steps.findIndex(s => s.id === input.selectedStepId);
-        if (selectedStepIndex === -1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "未找到选中的步骤" });
-        }
-
-        const selectedStep = input.steps[selectedStepIndex];
-        const previousSteps = input.steps.slice(Math.max(0, selectedStepIndex - 2), selectedStepIndex);
-        const nextStep = input.steps[selectedStepIndex + 1];
-
         let systemPrompt = "";
         let userPrompt = "";
 
-        if (input.mode === "why") {
+        if (input.mode === "explainCondition") {
+          // 解释已知条件的作用
+          if (!input.selectedCondition) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "未选中条件" });
+          }
+
+          systemPrompt = `你是一位数学辅导老师。学生选中了一个已知条件，需要你解释这个条件在解题中的作用。
+
+重要约束：
+1. 解释这个条件的含义
+2. 说明它在解题中的具体作用（在哪些步骤中使用）
+3. 控制在 2-5 句话以内
+4. 使用简洁的中文
+5. 数学公式使用 $...$ 格式包裹`;
+
+          userPrompt = `已知条件：${input.selectedCondition}
+
+解题步骤：
+${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
+
+请解释这个条件的作用（2-5句话）：`;
+        } else {
+          // 原有的 why 和 next 模式
+          const selectedStepIndex = input.steps.findIndex(s => s.id === input.selectedStepId);
+          if (selectedStepIndex === -1) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "未找到选中的步骤" });
+          }
+
+          const selectedStep = input.steps[selectedStepIndex];
+          const previousSteps = input.steps.slice(Math.max(0, selectedStepIndex - 2), selectedStepIndex);
+          const nextStep = input.steps[selectedStepIndex + 1];
+
+          if (input.mode === "why") {
           systemPrompt = `你是一位数学辅导老师。学生正在学习解题步骤，需要你解释为什么会得到当前这一步。
 
 重要约束：
@@ -213,6 +249,7 @@ export const appRouter = router({
             userPrompt += `\n\n学生选中的文字："${input.selectedText}"`;
           }
           userPrompt += "\n\n请给出下一步的思考提示（1-4句话，不直接给答案）：";
+          }
         }
 
         const messages: Array<any> = [

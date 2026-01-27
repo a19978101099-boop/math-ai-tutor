@@ -90,6 +90,12 @@ async function seedProblems() {
       problemImageKey: "problems/005d3f084fd9c1d4878c281c3a7495e8.png",
       solutionImageUrl: "/uploads/e1f5a3921aee873df1d7ff292d8827f4.png",
       solutionImageKey: "problems/e1f5a3921aee873df1d7ff292d8827f4.png",
+      conditions: JSON.stringify([
+        "S(12, -5)",
+        "T(-3, -7)",
+        "S 绕 O 逆时针旋转 90° 到 S'",
+        "T 关于 x 轴对称到 T'"
+      ]),
       steps: JSON.stringify(problem7Steps),
     });
 
@@ -103,6 +109,12 @@ async function seedProblems() {
       problemImageKey: "problems/b11416a9c6c40bbe999dbef2e558538e.png",
       solutionImageUrl: "/uploads/23bfe4812f27ab492df954d43824f119.png",
       solutionImageKey: "problems/23bfe4812f27ab492df954d43824f119.png",
+      conditions: JSON.stringify([
+        "AC ∥ ED",
+        "AD ∥ BC",
+        "∠ABC = ∠AED",
+        "AB = AE"
+      ]),
       steps: JSON.stringify(problem8Steps),
     });
 

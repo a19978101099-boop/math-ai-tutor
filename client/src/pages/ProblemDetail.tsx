@@ -23,6 +23,7 @@ export default function ProblemDetail() {
   const [visibleStepsCount, setVisibleStepsCount] = useState(1); // 渐进式显示步骤
   const [showAllSteps, setShowAllSteps] = useState(false); // 是否显示所有步骤
   const [isSpeaking, setIsSpeaking] = useState(false); // 语音播放状态
+  const [selectedCondition, setSelectedCondition] = useState<string | null>(null); // 选中的条件
 
   const handleStepClick = (stepId: string) => {
     setSelectedStepId(stepId);
@@ -47,6 +48,7 @@ export default function ProblemDetail() {
         problemImageUrl: problem.problemImageUrl || undefined,
         solutionImageUrl: problem.solutionImageUrl || undefined,
         steps: problem.steps,
+        conditions: problem.conditions || undefined,
         selectedStepId,
         selectedText: selectedText || undefined,
         mode,
@@ -57,6 +59,34 @@ export default function ProblemDetail() {
       }
     } catch (error) {
       toast.error("获取提示失败，请重试");
+      console.error(error);
+    }
+  };
+
+  // 处理条件点击
+  const handleConditionClick = async (condition: string) => {
+    if (!problem) return;
+
+    setSelectedCondition(condition);
+    setSelectedStepId(null); // 清除步骤选中
+    setSelectedText("");
+    setIsMobileDrawerOpen(true);
+
+    try {
+      const result = await hintMutation.mutateAsync({
+        problemImageUrl: problem.problemImageUrl || undefined,
+        solutionImageUrl: problem.solutionImageUrl || undefined,
+        steps: problem.steps,
+        conditions: problem.conditions || undefined,
+        selectedCondition: condition,
+        mode: "explainCondition",
+      });
+
+      if (typeof result.hint === "string") {
+        setCurrentHint(result.hint);
+      }
+    } catch (error) {
+      toast.error("获取条件解释失败，请重试");
       console.error(error);
     }
   };
@@ -189,6 +219,33 @@ export default function ProblemDetail() {
               )}
             </Card>
 
+            {/* 已知条件列表 */}
+            {problem.conditions && problem.conditions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">已知条件</CardTitle>
+                  <p className="text-sm text-muted-foreground">点击条件查看 AI 解释其在解题中的作用</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {problem.conditions.map((condition, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleConditionClick(condition)}
+                        className={`px-3 py-2 rounded-lg border transition-all ${
+                          selectedCondition === condition
+                            ? "bg-primary/20 border-primary text-primary"
+                            : "bg-muted/50 border-border hover:border-primary/50 hover:bg-muted"
+                        }`}
+                      >
+                        <span className="text-sm font-medium">{renderMathText(condition)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* 步骤列表 */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -257,17 +314,49 @@ export default function ProblemDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {!selectedStep ? (
+                  {!selectedStepId && !selectedCondition ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
-                      点击左侧的步骤卡片开始获取 AI 提示
+                      点击左侧的步骤卡片或已知条件开始获取 AI 提示
                     </p>
-                  ) : (
+                  ) : selectedCondition ? (
                     <>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium">当前步骤：</p>
-                        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-                          {selectedStep.text}
+                        <p className="text-sm font-medium">选中条件：</p>
+                        <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
+                          {renderMathText(selectedCondition)}
                         </p>
+                      </div>
+
+                      {hintMutation.isPending && (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        </div>
+                      )}
+
+                      {currentHint && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">AI 解释：</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSpeak(currentHint)}
+                              className="h-8 px-2"
+                            >
+                              <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
+                            </Button>
+                          </div>
+                          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : selectedStepId ? (
+                    <>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">选中步骤：</p>
+                        <p className="text-sm text-muted-foreground">{selectedStep?.text}</p>
                       </div>
 
                       {selectedText && (
@@ -325,7 +414,7 @@ export default function ProblemDetail() {
                         </div>
                       )}
                     </>
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
             </div>
