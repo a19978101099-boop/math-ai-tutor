@@ -25,4 +25,22 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Problems table: stores uploaded math problems with images and extracted steps
+ */
+export const problems = mysqlTable("problems", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }),
+  problemImageUrl: text("problemImageUrl"),
+  problemImageKey: text("problemImageKey"),
+  solutionImageUrl: text("solutionImageUrl"),
+  solutionImageKey: text("solutionImageKey"),
+  /** JSON array of step objects: [{id: string, text: string}] */
+  steps: text("steps").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Problem = typeof problems.$inferSelect;
+export type InsertProblem = typeof problems.$inferInsert;

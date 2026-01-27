@@ -1,0 +1,118 @@
+import { drizzle } from "drizzle-orm/mysql2";
+import { problems } from "./drizzle/schema.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const db = drizzle(process.env.DATABASE_URL);
+
+// 题目7的步骤
+const problem7Steps = [
+  {
+    id: "step-1",
+    text: "S' 的坐标是 (5, 12)。将 S(12, -5) 逆时针旋转 90° 后，坐标变换公式为 (x, y) → (-y, x)，所以 S'(-(-5), 12) = (5, 12)。"
+  },
+  {
+    id: "step-2",
+    text: "T' 的坐标是 (-3, 7)。T(-3, -7) 关于 x 轴的反射，坐标变换公式为 (x, y) → (x, -y)，所以 T'(-3, 7)。"
+  },
+  {
+    id: "step-3",
+    text: "S'T' 的斜率 = (12 - 7) / (5 - (-3)) = 5 / 8。使用斜率公式 m = (y₂ - y₁) / (x₂ - x₁)。"
+  },
+  {
+    id: "step-4",
+    text: "化简得到 5/8 = 0.625。"
+  }
+];
+
+// 题目8的步骤
+const problem8Steps = [
+  {
+    id: "step-1",
+    text: "∠ACB = ∠CAD（内错角，AD // BC）"
+  },
+  {
+    id: "step-2",
+    text: "∠CAD = ∠ADE（内错角，AC // ED）"
+  },
+  {
+    id: "step-3",
+    text: "∠ACB = ∠ADE"
+  },
+  {
+    id: "step-4",
+    text: "∠ABC = ∠AED（已知）"
+  },
+  {
+    id: "step-5",
+    text: "AB = AE（已知）"
+  },
+  {
+    id: "step-6",
+    text: "△ABC ≅ △AED（AAS 全等定理）"
+  },
+  {
+    id: "step-7",
+    text: "∠BAC = ∠DAE（由三角形全等得出）"
+  },
+  {
+    id: "step-8",
+    text: "∠BAC = 87°"
+  },
+  {
+    id: "step-9",
+    text: "∠ACB = 180° - ∠BAC - ∠ABC = 180° - 87° - 39° = 54°"
+  },
+  {
+    id: "step-10",
+    text: "∠CAD = ∠ACB = 54°"
+  },
+  {
+    id: "step-11",
+    text: "注意 AC = AD，因此 △ACD 是等腰三角形"
+  },
+  {
+    id: "step-12",
+    text: "∠ACD = ∠ADC = (180° - ∠CAD) / 2 = (180° - 54°) / 2 = 63°"
+  }
+];
+
+async function seedProblems() {
+  try {
+    console.log("开始插入预置题目...");
+
+    // 插入题目7
+    await db.insert(problems).values({
+      userId: 1, // 假设用户 ID 为 1
+      title: "题目7：坐标变换与斜率计算",
+      problemImageUrl: "/uploads/005d3f084fd9c1d4878c281c3a7495e8.png",
+      problemImageKey: "problems/005d3f084fd9c1d4878c281c3a7495e8.png",
+      solutionImageUrl: "/uploads/e1f5a3921aee873df1d7ff292d8827f4.png",
+      solutionImageKey: "problems/e1f5a3921aee873df1d7ff292d8827f4.png",
+      steps: JSON.stringify(problem7Steps),
+    });
+
+    console.log("✓ 题目7 插入成功");
+
+    // 插入题目8
+    await db.insert(problems).values({
+      userId: 1,
+      title: "题目8：三角形全等证明与角度计算",
+      problemImageUrl: "/uploads/b11416a9c6c40bbe999dbef2e558538e.png",
+      problemImageKey: "problems/b11416a9c6c40bbe999dbef2e558538e.png",
+      solutionImageUrl: "/uploads/23bfe4812f27ab492df954d43824f119.png",
+      solutionImageKey: "problems/23bfe4812f27ab492df954d43824f119.png",
+      steps: JSON.stringify(problem8Steps),
+    });
+
+    console.log("✓ 题目8 插入成功");
+    console.log("所有预置题目插入完成！");
+    process.exit(0);
+  } catch (error) {
+    console.error("插入题目时出错：", error);
+    process.exit(1);
+  }
+}
+
+seedProblems();
