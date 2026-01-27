@@ -6,6 +6,8 @@ import { ArrowLeft, HelpCircle, Lightbulb, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
+import "katex/dist/katex.min.css";
+import { InlineMath, BlockMath } from "react-katex";
 
 export default function ProblemDetail() {
   const params = useParams<{ id: string }>();
@@ -106,29 +108,15 @@ export default function ProblemDetail() {
               <CardHeader>
                 <CardTitle className="text-2xl">{problem.title || `题目 #${problem.id}`}</CardTitle>
               </CardHeader>
-              {(problem.problemImageUrl || problem.solutionImageUrl) && (
+              {problem.problemImageUrl && (
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {problem.problemImageUrl && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">题目</p>
-                        <img
-                          src={problem.problemImageUrl}
-                          alt="题目"
-                          className="w-full rounded border border-border"
-                        />
-                      </div>
-                    )}
-                    {problem.solutionImageUrl && (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">答案</p>
-                        <img
-                          src={problem.solutionImageUrl}
-                          alt="答案"
-                          className="w-full rounded border border-border"
-                        />
-                      </div>
-                    )}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">题目</p>
+                    <img
+                      src={problem.problemImageUrl}
+                      alt="题目"
+                      className="w-full rounded border border-border"
+                    />
                   </div>
                 </CardContent>
               )}
@@ -221,7 +209,7 @@ export default function ProblemDetail() {
                         <div className="space-y-2">
                           <p className="text-sm font-medium">AI 提示：</p>
                           <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                            <p className="text-sm leading-relaxed">{currentHint}</p>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
                           </div>
                         </div>
                       )}
@@ -293,7 +281,7 @@ export default function ProblemDetail() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">AI 提示：</p>
                     <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                      <p className="text-sm leading-relaxed">{currentHint}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
                     </div>
                   </div>
                 )}
@@ -302,6 +290,44 @@ export default function ProblemDetail() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* 完整答案区域（页面最下方） */}
+      {problem.solutionImageUrl && (
+        <div className="container py-8 mt-12">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">完整答案</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                以下是该题目的完整解答过程，仅供参考。建议先尝试自己解题，再查看答案。
+              </p>
+            </CardHeader>
+            <CardContent>
+              <img
+                src={problem.solutionImageUrl}
+                alt="完整答案"
+                className="w-full rounded border border-border"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
+}
+
+// 渲染包含 LaTeX 公式的文本
+function renderMathText(text: string) {
+  // 将 $...$ 转换为 LaTeX 渲染
+  const parts = text.split(/(\$[^$]+\$)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("$") && part.endsWith("$")) {
+      const latex = part.slice(1, -1);
+      try {
+        return <InlineMath key={index} math={latex} />;
+      } catch (e) {
+        return <span key={index}>{part}</span>;
+      }
+    }
+    return <span key={index}>{part}</span>;
+  });
 }
