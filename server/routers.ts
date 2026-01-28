@@ -30,6 +30,7 @@ export const appRouter = router({
       })
       .input(z.object({
         title: z.string().optional(),
+        problemText: z.string().optional(),
         problemImageUrl: z.string().optional(),
         problemImageKey: z.string().optional(),
         solutionImageUrl: z.string().optional(),
@@ -45,6 +46,7 @@ export const appRouter = router({
         const problemId = await createProblem({
           userId: ctx.user.id,
           title: input.title,
+          problemText: input.problemText,
           problemImageUrl: input.problemImageUrl,
           problemImageKey: input.problemImageKey,
           solutionImageUrl: input.solutionImageUrl,
@@ -96,12 +98,12 @@ export const appRouter = router({
         const messages: LLMMessage[] = [
           {
             role: "system",
-            content: "你是一个数学解题步骤提取专家。请仔细分析图片中的数学题目和解答过程，提取出：1) 所有已知条件（如“∠ABC = ∠AED”、“AB = AE”）；2) 清晰的解题步骤。每个步骤应该是一个独立的推理或计算过程。",
+            content: "你是一个数学题目分析助手。你的任务是从题目和答案图片中提取：1) 题目文字：提取题目图片中的所有文字内容（中文和英文），数学公式使用 LaTeX 格式（用 $ 包裹）。 2) 已知条件：题目中明确给出的条件，如角度相等、边长相等、平行关系等，使用 LaTeX 格式。 3) 解题步骤：从答案中提取每一步的推理过程，使用 LaTeX 格式表示数学公式。所有数学符号必须使用 LaTeX 格式，用 $ 包裹。",
           },
         ];
 
         const userContent: MessageContent[] = [
-          { type: "text", text: "请从以下图片中提取：1) 所有已知条件（题目中明确给出的条件，如角度相等、边长相等、平行关系等）；2) 解题步骤。" },
+          { type: "text", text: "请从以下图片中提取：1) 题目文字（完整的中英文内容，数学公式用 LaTeX）；2) 所有已知条件；3) 解题步骤。" },
         ];
 
         if (input.problemImageUrl) {
@@ -130,6 +132,10 @@ export const appRouter = router({
               schema: {
                 type: "object",
                 properties: {
+                  problemText: {
+                    type: "string",
+                    description: "题目文字内容（包含中英文和 LaTeX 公式）",
+                  },
                   conditions: {
                     type: "array",
                     description: "已知条件列表",
@@ -149,7 +155,7 @@ export const appRouter = router({
                     },
                   },
                 },
-                required: ["conditions", "steps"],
+                required: ["problemText", "conditions", "steps"],
                 additionalProperties: false,
               },
             },
@@ -165,8 +171,9 @@ export const appRouter = router({
           text: s.text,
         }));
         const conditions = parsed.conditions || [];
+        const problemText = parsed.problemText || "";
 
-        return { steps, conditions };
+        return { steps, conditions, problemText };
       }),
 
     // Get AI hint for a specific step (public access)

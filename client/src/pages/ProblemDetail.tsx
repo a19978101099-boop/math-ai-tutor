@@ -228,18 +228,28 @@ export default function ProblemDetail() {
               <CardHeader>
                 <CardTitle className="text-2xl">{problem.title || `题目 #${problem.id}`}</CardTitle>
               </CardHeader>
-              {problem.problemImageUrl && (
-                <CardContent>
+              <CardContent className="space-y-4">
+                {/* 题目文字 */}
+                {problem.problemText && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">题目</p>
+                    <div className="prose prose-invert max-w-none">
+                      <p className="text-base leading-relaxed whitespace-pre-wrap">{renderMathText(problem.problemText)}</p>
+                    </div>
+                  </div>
+                )}
+                {/* 题目图片 */}
+                {problem.problemImageUrl && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">{problem.problemText ? "题目图片（参考）" : "题目"}</p>
                     <img
                       src={problem.problemImageUrl}
                       alt="题目"
                       className="w-full rounded border border-border"
                     />
                   </div>
-                </CardContent>
-              )}
+                )}
+              </CardContent>
             </Card>
 
             {/* 已知条件列表 */}

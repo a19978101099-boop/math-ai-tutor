@@ -24,6 +24,7 @@ export default function AdminUpload() {
   const [extractedData, setExtractedData] = useState<{
     steps: Array<{ id: string; text: string }>;
     conditions: string[];
+    problemText: string;
   } | null>(null);
 
   const createMutation = trpc.problem.create.useMutation();
@@ -108,6 +109,7 @@ export default function AdminUpload() {
       setExtractedData({
         steps: result.steps,
         conditions: result.conditions,
+        problemText: result.problemText,
       });
 
       toast.success("步骤提取成功！请检查并确认");
@@ -156,6 +158,7 @@ export default function AdminUpload() {
       // Create problem
       const result = await createMutation.mutateAsync({
         title,
+        problemText: extractedData.problemText,
         problemImageUrl,
         problemImageKey,
         solutionImageUrl,
