@@ -1,0 +1,98 @@
+[
+  {
+    "id": 30001,
+    "title": "题目7：坐标变换与斜率计算",
+    "problemText": "7. 点 $S$ 和 $T$ 的坐标分别是 $(12, -5)$ 和 $(-3, -7)$。$S$ 绕原点 $O$ 逆时针旋转 $90°$ 到 $S'$，$T$ 关于 $x$ 轴对称到 $T'$。\n(a) 写出 $S'$ 和 $T'$ 的坐标。\n(b) 求 $S'T'$ 的斜率。",
+    "problemTextEn": "7. The coordinates of the points $S$ and $T$ are $(12, -5)$ and $(-3, -7)$ respectively. $S$ is rotated anticlockwise about $O$ through $90°$ to $S'$, where $O$ is the origin. $T$ is the reflection image of $T$ with respect to the x-axis.\n(a) Write down the coordinates of $S'$ and $T'$.\n(b) Find the slope of $S'T'$.",
+    "problemImageUrl": "/uploads/005d3f084fd9c1d4878c281c3a7495e8.png",
+    "solutionImageUrl": "/uploads/e1f5a3921aee873df1d7ff292d8827f4.png",
+    "steps": [
+      {
+        "id": "step-1",
+        "text": "S' 的坐标是 (5, 12)。将 S(12, -5) 逆时针旋转 90° 后，坐标变换公式为 (x, y) → (-y, x)，所以 S'(-(-5), 12) = (5, 12)。"
+      },
+      {
+        "id": "step-2",
+        "text": "T' 的坐标是 (-3, 7)。T(-3, -7) 关于 x 轴的反射，坐标变换公式为 (x, y) → (x, -y)，所以 T'(-3, 7)。"
+      },
+      {
+        "id": "step-3",
+        "text": "S'T' 的斜率 = (12 - 7) / (5 - (-3)) = 5 / 8。使用斜率公式 m = (y₂ - y₁) / (x₂ - x₁)。"
+      },
+      {
+        "id": "step-4",
+        "text": "化简得到 5/8 = 0.625。"
+      }
+    ],
+    "conditions": [
+      "S(12, -5)",
+      "T(-3, -7)",
+      "S 绕 O 逆时针旋转 90° 到 S'",
+      "T 关于 x 轴对称到 T'"
+    ]
+  },
+  {
+    "id": 30002,
+    "title": "题目8：三角形全等证明与角度计算",
+    "problemText": "8. 在图1中，$A$ 是四边形 $BCDE$ 内的一点，满足 $AC \\parallel ED$ 和 $AD \\parallel BC$。已知 $\\angle ABC = \\angle AED$ 和 $AB = AE$。\n(a) 证明 $\\triangle ABC \\cong \\triangle AED$。\n(b) 如果 $\\angle ABC = 39°$ 和 $\\angle DAE = 87°$，求 $\\angle ACD$。",
+    "problemTextEn": "8. In Figure 1, $A$ is a point lying inside the quadrilateral $BCDE$ such that $AC \\parallel ED$ and $AD \\parallel BC$. It is given that $\\angle ABC = \\angle AED$ and $AB = AE$.\n(a) Prove that $\\triangle ABC \\cong \\triangle AED$.\n(b) If $\\angle ABC = 39°$ and $\\angle DAE = 87°$, find $\\angle ACD$.",
+    "problemImageUrl": "/uploads/b11416a9c6c40bbe999dbef2e558538e.png",
+    "solutionImageUrl": "/uploads/23bfe4812f27ab492df954d43824f119.png",
+    "steps": [
+      {
+        "id": "step-1",
+        "text": "∠ACB = ∠CAD（内错角，AD // BC）"
+      },
+      {
+        "id": "step-2",
+        "text": "∠CAD = ∠ADE（内错角，AC // ED）"
+      },
+      {
+        "id": "step-3",
+        "text": "∠ACB = ∠ADE"
+      },
+      {
+        "id": "step-4",
+        "text": "∠ABC = ∠AED（已知）"
+      },
+      {
+        "id": "step-5",
+        "text": "AB = AE（已知）"
+      },
+      {
+        "id": "step-6",
+        "text": "△ABC ≅ △AED（AAS 全等定理）"
+      },
+      {
+        "id": "step-7",
+        "text": "∠BAC = ∠DAE（由三角形全等得出）"
+      },
+      {
+        "id": "step-8",
+        "text": "∠BAC = 87°"
+      },
+      {
+        "id": "step-9",
+        "text": "∠ACB = 180° - ∠BAC - ∠ABC = 180° - 87° - 39° = 54°"
+      },
+      {
+        "id": "step-10",
+        "text": "∠CAD = ∠ACB = 54°"
+      },
+      {
+        "id": "step-11",
+        "text": "注意 AC = AD，因此 △ACD 是等腰三角形"
+      },
+      {
+        "id": "step-12",
+        "text": "∠ACD = ∠ADC = (180° - ∠CAD) / 2 = (180° - 54°) / 2 = 63°"
+      }
+    ],
+    "conditions": [
+      "AC ∥ ED",
+      "AD ∥ BC",
+      "∠ABC = ∠AED",
+      "AB = AE"
+    ]
+  }
+]

@@ -287,7 +287,9 @@ export default function ProblemDetail() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">已知条件</CardTitle>
-                  <p className="text-sm text-muted-foreground">点击条件查看 AI 解释</p>
+                  <p className="text-sm text-muted-foreground">
+                    不知道如何开始解题？点击任意条件，AI 会告诉你如何利用它、如何转化为数学等式、以及在解题中的作用。
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
