@@ -31,6 +31,7 @@ export const appRouter = router({
       .input(z.object({
         title: z.string().optional(),
         problemText: z.string().optional(),
+        problemTextEn: z.string().optional(),
         problemImageUrl: z.string().optional(),
         problemImageKey: z.string().optional(),
         solutionImageUrl: z.string().optional(),
@@ -47,6 +48,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           title: input.title,
           problemText: input.problemText,
+          problemTextEn: input.problemTextEn,
           problemImageUrl: input.problemImageUrl,
           problemImageKey: input.problemImageKey,
           solutionImageUrl: input.solutionImageUrl,
@@ -98,12 +100,12 @@ export const appRouter = router({
         const messages: LLMMessage[] = [
           {
             role: "system",
-            content: "你是一个数学题目分析助手。你的任务是从题目和答案图片中提取：1) 题目文字：提取题目图片中的所有文字内容（中文和英文），数学公式使用 LaTeX 格式（用 $ 包裹）。 2) 已知条件：题目中明确给出的条件，如角度相等、边长相等、平行关系等，使用 LaTeX 格式。 3) 解题步骤：从答案中提取每一步的推理过程，使用 LaTeX 格式表示数学公式。所有数学符号必须使用 LaTeX 格式，用 $ 包裹。",
+            content: "你是一个数学题目分析助手。你的任务是从题目和答案图片中提取：1) 中文题目文字：提取题目图片中的所有中文内容，数学公式使用 LaTeX 格式（用 $ 包裹）。 2) 英文题目文字：提取题目图片中的所有英文内容，数学公式使用 LaTeX 格式（用 $ 包裹）。 3) 已知条件：题目中明确给出的条件，如角度相等、边长相等、平行关系等，使用 LaTeX 格式。 4) 解题步骤：从答案中提取每一步的推理过程，使用 LaTeX 格式表示数学公式。所有数学符号必须使用 LaTeX 格式，用 $ 包裹。",
           },
         ];
 
         const userContent: MessageContent[] = [
-          { type: "text", text: "请从以下图片中提取：1) 题目文字（完整的中英文内容，数学公式用 LaTeX）；2) 所有已知条件；3) 解题步骤。" },
+          { type: "text", text: "请从以下图片中提取：1) 中文题目文字（完整内容，数学公式用 LaTeX）；2) 英文题目文字（完整内容，数学公式用 LaTeX）；3) 所有已知条件；4) 解题步骤。" },
         ];
 
         if (input.problemImageUrl) {
@@ -134,7 +136,11 @@ export const appRouter = router({
                 properties: {
                   problemText: {
                     type: "string",
-                    description: "题目文字内容（包含中英文和 LaTeX 公式）",
+                    description: "中文题目文字内容（包含 LaTeX 公式）",
+                  },
+                  problemTextEn: {
+                    type: "string",
+                    description: "英文题目文字内容（包含 LaTeX 公式）",
                   },
                   conditions: {
                     type: "array",
@@ -155,7 +161,7 @@ export const appRouter = router({
                     },
                   },
                 },
-                required: ["problemText", "conditions", "steps"],
+                required: ["problemText", "problemTextEn", "conditions", "steps"],
                 additionalProperties: false,
               },
             },
@@ -172,8 +178,9 @@ export const appRouter = router({
         }));
         const conditions = parsed.conditions || [];
         const problemText = parsed.problemText || "";
+        const problemTextEn = parsed.problemTextEn || "";
 
-        return { steps, conditions, problemText };
+        return { steps, conditions, problemText, problemTextEn };
       }),
 
     // Get AI hint for a specific step (public access)

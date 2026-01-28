@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, title, problemImageUrl, solutionImageUrl FROM problems;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user CpukH5rjPkny7dW.root --database C5wzA5LwhnXBKwVJaMeftJ --execute SELECT id, title, problemImageUrl, solutionImageUrl FROM problems;",
+  "rows": [
+    {
+      "id": "30001",
+      "title": "题目7：坐标变换与斜率计算",
+      "problemImageUrl": "/uploads/005d3f084fd9c1d4878c281c3a7495e8.png",
+      "solutionImageUrl": "/uploads/e1f5a3921aee873df1d7ff292d8827f4.png"
+    },
+    {
+      "id": "30002",
+      "title": "题目8：三角形全等证明与角度计算",
+      "problemImageUrl": "/uploads/b11416a9c6c40bbe999dbef2e558538e.png",
+      "solutionImageUrl": "/uploads/23bfe4812f27ab492df954d43824f119.png"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tproblemImageUrl\tsolutionImageUrl\n30001\t题目7：坐标变换与斜率计算\t/uploads/005d3f084fd9c1d4878c281c3a7495e8.png\t/uploads/e1f5a3921aee873df1d7ff292d8827f4.png\n30002\t题目8：三角形全等证明与角度计算\t/uploads/b11416a9c6c40bbe999dbef2e558538e.png\t/uploads/23bfe4812f27ab492df954d43824f119.png\n",
+  "stderr": "",
+  "execution_time_ms": 1528
+}

@@ -250,19 +250,28 @@ export default function ProblemDetail() {
                 <CardTitle className="text-2xl">{problem.title || `题目 #${problem.id}`}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* 题目文字 */}
+                {/* 中文题目文字 */}
                 {problem.problemText && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">题目</p>
-                    <div className="prose prose-invert max-w-none">
+                    <p className="text-sm text-muted-foreground mb-2 font-semibold">中文题目</p>
+                    <div className="prose prose-invert max-w-none bg-muted/30 p-4 rounded-lg">
                       <p className="text-base leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderMathText(problem.problemText) }} />
+                    </div>
+                  </div>
+                )}
+                {/* 英文题目文字 */}
+                {problem.problemTextEn && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2 font-semibold">English Question</p>
+                    <div className="prose prose-invert max-w-none bg-muted/30 p-4 rounded-lg">
+                      <p className="text-base leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderMathText(problem.problemTextEn) }} />
                     </div>
                   </div>
                 )}
                 {/* 题目图片 */}
                 {problem.problemImageUrl && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">{problem.problemText ? "题目图片（参考）" : "题目"}</p>
+                    <p className="text-sm text-muted-foreground mb-2 font-semibold">题目图片（参考）</p>
                     <img
                       src={problem.problemImageUrl}
                       alt="题目"

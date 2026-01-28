@@ -32,8 +32,10 @@ export const problems = mysqlTable("problems", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   title: varchar("title", { length: 255 }),
-  /** Extracted text from problem image (with LaTeX for math formulas) */
+  /** Extracted Chinese text from problem image (with LaTeX for math formulas) */
   problemText: text("problemText"),
+  /** Extracted English text from problem image (with LaTeX for math formulas) */
+  problemTextEn: text("problemTextEn"),
   problemImageUrl: text("problemImageUrl"),
   problemImageKey: text("problemImageKey"),
   solutionImageUrl: text("solutionImageUrl"),

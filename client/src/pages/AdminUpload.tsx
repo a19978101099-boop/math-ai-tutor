@@ -25,6 +25,7 @@ export default function AdminUpload() {
     steps: Array<{ id: string; text: string }>;
     conditions: string[];
     problemText: string;
+    problemTextEn: string;
   } | null>(null);
 
   const createMutation = trpc.problem.create.useMutation();
@@ -110,6 +111,7 @@ export default function AdminUpload() {
         steps: result.steps,
         conditions: result.conditions,
         problemText: result.problemText,
+        problemTextEn: result.problemTextEn,
       });
 
       toast.success("步骤提取成功！请检查并确认");
@@ -159,6 +161,7 @@ export default function AdminUpload() {
       const result = await createMutation.mutateAsync({
         title,
         problemText: extractedData.problemText,
+        problemTextEn: extractedData.problemTextEn,
         problemImageUrl,
         problemImageKey,
         solutionImageUrl,

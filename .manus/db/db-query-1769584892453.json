@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE problems SET \nproblemText = '8. 在图1中，$A$ 是四边形 $BCDE$ 内的一点，满足 $AC \\parallel ED$ 和 $AD \\parallel BC$。已知 $\\angle ABC = \\angle AED$ 和 $AB = AE$。\\n(a) 证明 $\\triangle ABC \\cong \\triangle AED$。\\n(b) 如果 $\\angle ABC = 39°$ 和 $\\angle DAE = 87°$，求 $\\angle ACD$。',\nproblemTextEn = '8. In Figure 1, $A$ is a point lying inside the quadrilateral $BCDE$ such that $AC \\parallel ED$ and $AD \\parallel BC$. It is given that $\\angle ABC = \\angle AED$ and $AB = AE$.\\n(a) Prove that $\\triangle ABC \\cong \\triangle AED$.\\n(b) If $\\angle ABC = 39°$ and $\\angle DAE = 87°$, find $\\angle ACD$.'\nWHERE id = 30002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user CpukH5rjPkny7dW.root --database C5wzA5LwhnXBKwVJaMeftJ --execute UPDATE problems SET \nproblemText = '8. 在图1中，$A$ 是四边形 $BCDE$ 内的一点，满足 $AC \\parallel ED$ 和 $AD \\parallel BC$。已知 $\\angle ABC = \\angle AED$ 和 $AB = AE$。\\n(a) 证明 $\\triangle ABC \\cong \\triangle AED$。\\n(b) 如果 $\\angle ABC = 39°$ 和 $\\angle DAE = 87°$，求 $\\angle ACD$。',\nproblemTextEn = '8. In Figure 1, $A$ is a point lying inside the quadrilateral $BCDE$ such that $AC \\parallel ED$ and $AD \\parallel BC$. It is given that $\\angle ABC = \\angle AED$ and $AB = AE$.\\n(a) Prove that $\\triangle ABC \\cong \\triangle AED$.\\n(b) If $\\angle ABC = 39°$ and $\\angle DAE = 87°$, find $\\angle ACD$.'\nWHERE id = 30002;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1525
+}

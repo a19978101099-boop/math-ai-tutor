@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE problems SET \nproblemText = '7. 点 $S$ 和 $T$ 的坐标分别是 $(12, -5)$ 和 $(-3, -7)$。$S$ 绕原点 $O$ 逆时针旋转 $90°$ 到 $S\\'$，$T$ 关于 $x$ 轴对称到 $T\\'$。\\n(a) 写出 $S\\'$ 和 $T\\'$ 的坐标。\\n(b) 求 $S\\'T\\'$ 的斜率。',\nproblemTextEn = '7. The coordinates of the points $S$ and $T$ are $(12, -5)$ and $(-3, -7)$ respectively. $S$ is rotated anticlockwise about $O$ through $90°$ to $S\\'$, where $O$ is the origin. $T$ is the reflection image of $T$ with respect to the x-axis.\\n(a) Write down the coordinates of $S\\'$ and $T\\'$.\\n(b) Find the slope of $S\\'T\\'$.'\nWHERE id = 30001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user CpukH5rjPkny7dW.root --database C5wzA5LwhnXBKwVJaMeftJ --execute UPDATE problems SET \nproblemText = '7. 点 $S$ 和 $T$ 的坐标分别是 $(12, -5)$ 和 $(-3, -7)$。$S$ 绕原点 $O$ 逆时针旋转 $90°$ 到 $S\\'$，$T$ 关于 $x$ 轴对称到 $T\\'$。\\n(a) 写出 $S\\'$ 和 $T\\'$ 的坐标。\\n(b) 求 $S\\'T\\'$ 的斜率。',\nproblemTextEn = '7. The coordinates of the points $S$ and $T$ are $(12, -5)$ and $(-3, -7)$ respectively. $S$ is rotated anticlockwise about $O$ through $90°$ to $S\\'$, where $O$ is the origin. $T$ is the reflection image of $T$ with respect to the x-axis.\\n(a) Write down the coordinates of $S\\'$ and $T\\'$.\\n(b) Find the slope of $S\\'T\\'$.'\nWHERE id = 30001;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1521
+}
