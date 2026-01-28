@@ -127,3 +127,7 @@
 - [x] 解题步骤框独立显示（右侧中间，始终可见）
 - [x] 苏格拉底模式框独立显示（右侧下方，点击按钮后显示）
 - [x] 确保三个框可以同时查看
+
+## Bug 修复 - 苏格拉底模式数学公式显示
+- [x] 修复 SocraticMode 组件中数学公式显示为 HTML 代码的问题
+- [x] 使用 dangerouslySetInnerHTML 渲染 KaTeX HTML

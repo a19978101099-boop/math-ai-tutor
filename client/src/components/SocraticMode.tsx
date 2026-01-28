@@ -14,7 +14,7 @@ interface GuidingQuestion {
 interface SocraticModeProps {
   questions: GuidingQuestion[];
   onComplete: () => void;
-  renderMathText: (text: string) => React.ReactNode;
+  renderMathText: (text: string) => string;
 }
 
 export default function SocraticMode({ questions, onComplete, renderMathText }: SocraticModeProps) {
@@ -80,9 +80,10 @@ export default function SocraticMode({ questions, onComplete, renderMathText }: 
         </CardHeader>
         <CardContent className="space-y-4">
           {/* 问题文字 */}
-          <div className="text-base leading-relaxed">
-            {renderMathText(currentQuestion.question)}
-          </div>
+          <div 
+            className="text-base leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderMathText(currentQuestion.question) }}
+          />
 
           {/* 选项列表 */}
           <div className="space-y-3">
@@ -118,9 +119,10 @@ export default function SocraticMode({ questions, onComplete, renderMathText }: 
                         <span className="text-sm font-medium">{String.fromCharCode(65 + index)}</span>
                       )}
                     </div>
-                    <div className="flex-1">
-                      {renderMathText(option)}
-                    </div>
+                    <div 
+                      className="flex-1"
+                      dangerouslySetInnerHTML={{ __html: renderMathText(option) }}
+                    />
                   </div>
                 </button>
               );
@@ -133,9 +135,10 @@ export default function SocraticMode({ questions, onComplete, renderMathText }: 
               <p className="text-sm font-medium mb-2">
                 {selectedOption === currentQuestion.correctIndex ? "✅ 正确！" : "❌ 错误"}
               </p>
-              <p className="text-sm leading-relaxed">
-                {renderMathText(currentQuestion.explanation)}
-              </p>
+              <div 
+                className="text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderMathText(currentQuestion.explanation) }}
+              />
             </div>
           )}
 
