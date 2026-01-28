@@ -60,7 +60,7 @@ export default function SocraticMode({ questions, onComplete, renderMathText }: 
       {/* 进度条 */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>引导问题进度</span>
+          <span>苏格拉底引导进度</span>
           <span>{currentQuestionIndex + 1} / {questions.length}</span>
         </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -146,7 +146,7 @@ export default function SocraticMode({ questions, onComplete, renderMathText }: 
               className="w-full"
               size="lg"
             >
-              {isLastQuestion ? "完成引导" : "下一题"}
+              {isLastQuestion ? "完成苏格拉底引导" : "下一题"}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           )}

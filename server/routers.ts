@@ -409,10 +409,20 @@ ${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
           },
         });
 
+        if (!response || !response.choices || response.choices.length === 0) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM 返回结构异常" });
+        }
+
         const content = response.choices[0]?.message?.content;
-        if (!content || typeof content !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM 未返回内容" });
+        if (!content || typeof content !== "string") {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM 未返回内容" });
+        }
 
         const parsed = JSON.parse(content);
+        if (!parsed.questions || !Array.isArray(parsed.questions)) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "引导问题格式错误" });
+        }
+
         return { questions: parsed.questions };
       }),
   }),

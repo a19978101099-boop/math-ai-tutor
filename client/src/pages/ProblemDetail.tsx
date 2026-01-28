@@ -124,9 +124,9 @@ export default function ProblemDetail() {
 
       setGuidingQuestions(result.questions);
       setIsSocraticMode(true);
-      toast.success("引导问题已生成！");
+      toast.success("苏格拉底引导问题已生成！");
     } catch (error) {
-      toast.error("生成引导问题失败，请重试");
+      toast.error("生成苏格拉底引导问题失败，请重试");
       console.error(error);
     } finally {
       setIsLoadingQuestions(false);
@@ -136,7 +136,7 @@ export default function ProblemDetail() {
   const handleCompleteSocraticMode = () => {
     setIsSocraticMode(false);
     setGuidingQuestions([]);
-    toast.success("恭喜完成引导模式！现在可以查看完整解题步骤。");
+    toast.success("恭喜完成苏格拉底引导！现在可以查看完整解题步骤。");
   };
 
   // 语音播放功能
@@ -333,7 +333,7 @@ export default function ProblemDetail() {
                       ) : (
                         <GraduationCap className="w-4 h-4 mr-2" />
                       )}
-                      引导模式
+                      苏格拉底模式
                     </Button>
                   )}
                   {!showAllSteps && visibleStepsCount < problem.steps.length && (
