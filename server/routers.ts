@@ -327,6 +327,94 @@ ${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
         const { getUserProgressStats } = await import("./db");
         return await getUserProgressStats(ctx.user.openId);
       }),
+
+    // Generate Socratic guiding questions (public access)
+    generateGuidingQuestions: publicProcedure
+      .input(z.object({
+        problemImageUrl: z.string().optional(),
+        problemText: z.string().optional(),
+        solutionImageUrl: z.string().optional(),
+        steps: z.array(z.object({
+          id: z.string(),
+          text: z.string(),
+        })),
+        conditions: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import("./_core/llm");
+        
+        type MessageContent = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
+        type LLMMessage = { role: string; content: string | MessageContent[] };
+        
+        const messages: LLMMessage[] = [
+          {
+            role: "system",
+            content: "你是一个数学教学助手，使用苏格拉底式教学法。你的任务是根据题目和解题步骤，生成一系列引导问题，通过小问题和选择题选项，逐步引导学生自己推导出答案。\n\n每个引导问题应该：\n1. 针对一个具体的小知识点或推理步骤\n2. 提供 3-4 个选择项（其中只有一个是正确的）\n3. 选项要有迷惑性，但不要太难\n4. 问题要简洁清晰，帮助学生理解核心概念\n5. 数学公式使用 LaTeX 格式（用 $ 包裹）\n\n生成 3-5 个引导问题，按照解题逻辑顺序排列。",
+          },
+        ];
+
+        const userContent: MessageContent[] = [
+          { type: "text", text: `题目信息：\n${input.problemText || "无文字描述"}\n\n已知条件：\n${input.conditions?.join("\n") || "无"}\n\n解题步骤：\n${input.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\n请生成 3-5 个引导问题，帮助学生逐步理解和推导出这些步骤。` },
+        ];
+
+        if (input.problemImageUrl) {
+          userContent.push({
+            type: "image_url",
+            image_url: { url: input.problemImageUrl },
+          });
+        }
+
+        if (input.solutionImageUrl) {
+          userContent.push({
+            type: "image_url",
+            image_url: { url: input.solutionImageUrl },
+          });
+        }
+
+        messages.push({ role: "user", content: userContent });
+
+        const response = await invokeLLM({
+          messages: messages as any,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "guiding_questions",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  questions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        question: { type: "string", description: "引导问题文字" },
+                        options: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "选择项列表（3-4个）",
+                        },
+                        correctIndex: { type: "number", description: "正确选项的索引（0-based）" },
+                        explanation: { type: "string", description: "选择正确答案后的解释" },
+                      },
+                      required: ["question", "options", "correctIndex", "explanation"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["questions"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content || typeof content !== "string") throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM 未返回内容" });
+
+        const parsed = JSON.parse(content);
+        return { questions: parsed.questions };
+      }),
   }),
 });
 

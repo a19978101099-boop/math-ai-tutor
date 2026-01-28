@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, HelpCircle, Lightbulb, Loader2, Volume2, Eye, EyeOff, ChevronRight } from "lucide-react";
+import { ArrowLeft, HelpCircle, Lightbulb, Loader2, Volume2, Eye, EyeOff, ChevronRight, GraduationCap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
+import SocraticMode from "@/components/SocraticMode";
 
 export default function ProblemDetail() {
   const params = useParams<{ id: string }>();
@@ -29,6 +30,9 @@ export default function ProblemDetail() {
   const [showAllSteps, setShowAllSteps] = useState(false); // 是否显示所有步骤
   const [isSpeaking, setIsSpeaking] = useState(false); // 语音播放状态
   const [selectedCondition, setSelectedCondition] = useState<string | null>(null); // 选中的条件
+  const [isSocraticMode, setIsSocraticMode] = useState(false); // 苏格拉底引导模式
+  const [guidingQuestions, setGuidingQuestions] = useState<any[]>([]); // 引导问题列表
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false); // 加载引导问题
 
   const handleStepClick = (stepId: string) => {
     setSelectedStepId(stepId);
@@ -100,6 +104,39 @@ export default function ProblemDetail() {
       toast.error("获取条件解释失败，请重试");
       console.error(error);
     }
+  };
+
+  // 启动苏格拉底引导模式
+  const generateQuestionsMutation = trpc.problem.generateGuidingQuestions.useMutation();
+
+  const handleStartSocraticMode = async () => {
+    if (!problem) return;
+
+    setIsLoadingQuestions(true);
+    try {
+      const result = await generateQuestionsMutation.mutateAsync({
+        problemImageUrl: problem.problemImageUrl || undefined,
+        problemText: problem.problemText || undefined,
+        solutionImageUrl: problem.solutionImageUrl || undefined,
+        steps: problem.steps,
+        conditions: problem.conditions || undefined,
+      });
+
+      setGuidingQuestions(result.questions);
+      setIsSocraticMode(true);
+      toast.success("引导问题已生成！");
+    } catch (error) {
+      toast.error("生成引导问题失败，请重试");
+      console.error(error);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  };
+
+  const handleCompleteSocraticMode = () => {
+    setIsSocraticMode(false);
+    setGuidingQuestions([]);
+    toast.success("恭喜完成引导模式！现在可以查看完整解题步骤。");
   };
 
   // 语音播放功能
@@ -284,6 +321,21 @@ export default function ProblemDetail() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">解题步骤</h2>
                 <div className="flex gap-2">
+                  {!isSocraticMode && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleStartSocraticMode}
+                      disabled={isLoadingQuestions}
+                    >
+                      {isLoadingQuestions ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <GraduationCap className="w-4 h-4 mr-2" />
+                      )}
+                      引导模式
+                    </Button>
+                  )}
                   {!showAllSteps && visibleStepsCount < problem.steps.length && (
                     <Button
                       variant="outline"
@@ -306,33 +358,41 @@ export default function ProblemDetail() {
                   )}
                 </div>
               </div>
-              <div className="space-y-3">
-                {problem.steps.slice(0, visibleStepsCount).map((step, index) => (
-                  <div
-                    key={step.id}
-                    className={`step-card ${selectedStepId === step.id ? "step-card-selected" : ""}`}
-                    onClick={() => handleStepClick(step.id)}
-                    onMouseUp={handleTextSelection}
-                  >
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                        {index + 1}
+              {isSocraticMode && guidingQuestions.length > 0 ? (
+                <SocraticMode
+                  questions={guidingQuestions}
+                  onComplete={handleCompleteSocraticMode}
+                  renderMathText={renderMathText}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {problem.steps.slice(0, visibleStepsCount).map((step, index) => (
+                    <div
+                      key={step.id}
+                      className={`step-card ${selectedStepId === step.id ? "step-card-selected" : ""}`}
+                      onClick={() => handleStepClick(step.id)}
+                      onMouseUp={handleTextSelection}
+                    >
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
+                          {index + 1}
+                        </div>
+                        <p className="flex-1 text-selection-highlight select-text">{step.text}</p>
                       </div>
-                      <p className="flex-1 text-selection-highlight select-text">{step.text}</p>
                     </div>
-                  </div>
-                ))}
-                {!showAllSteps && visibleStepsCount < problem.steps.length && (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleShowNextStep}
-                  >
-                    <ChevronRight className="w-4 h-4 mr-2" />
-                    显示下一步 ({visibleStepsCount + 1}/{problem.steps.length})
-                  </Button>
-                )}
-              </div>
+                  ))}
+                  {!showAllSteps && visibleStepsCount < problem.steps.length && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleShowNextStep}
+                    >
+                      <ChevronRight className="w-4 h-4 mr-2" />
+                      显示下一步 ({visibleStepsCount + 1}/{problem.steps.length})
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
