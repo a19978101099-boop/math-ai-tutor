@@ -78,3 +78,8 @@
 - [x] 修改 problem.list 为公开访问（所有用户可以查看所有题目）
 - [x] 修改 problem.getById 为公开访问（所有用户可以查看题目详情）
 - [x] 修改 problem.create 为管理员专用（只有管理员可以上传题目）
+
+## Bug 修复
+- [x] 修复点击步骤后 AI 提示不显示的问题（将 hint API 改为 publicProcedure）
+- [x] 检查浏览器控制台错误日志
+- [x] 验证 hint API 调用是否正常

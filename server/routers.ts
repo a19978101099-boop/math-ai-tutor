@@ -169,8 +169,8 @@ export const appRouter = router({
         return { steps, conditions };
       }),
 
-    // Get AI hint for a specific step
-    hint: protectedProcedure
+    // Get AI hint for a specific step (public access)
+    hint: publicProcedure
       .input(z.object({
         problemImageUrl: z.string().optional(),
         solutionImageUrl: z.string().optional(),
