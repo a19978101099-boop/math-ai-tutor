@@ -20,8 +20,14 @@ export const appRouter = router({
   }),
 
   problem: router({
-    // Upload and create a new problem
+    // Upload and create a new problem (Admin only)
     create: protectedProcedure
+      .use(({ ctx, next }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: '只有管理员可以上传题目' });
+        }
+        return next({ ctx });
+      })
       .input(z.object({
         title: z.string().optional(),
         problemImageUrl: z.string().optional(),
@@ -49,23 +55,23 @@ export const appRouter = router({
         return { id: problemId };
       }),
 
-    // Get user's problems list
-    list: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserProblems } = await import("./db");
-      const problems = await getUserProblems(ctx.user.id);
-      return problems.map(p => ({
+    // Get all problems list (public access)
+    list: publicProcedure.query(async () => {
+      const { getAllProblems } = await import("./db");
+      const problems = await getAllProblems();
+      return problems.map((p: any) => ({
         ...p,
         steps: JSON.parse(p.steps) as Array<{ id: string; text: string }>,
       }));
     }),
 
-    // Get problem by ID
-    getById: protectedProcedure
+    // Get problem by ID (public access)
+    getById: publicProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ ctx, input }) => {
+      .query(async ({ input }) => {
         const { getProblemById } = await import("./db");
         const problem = await getProblemById(input.id);
-        if (!problem || problem.userId !== ctx.user.id) {
+        if (!problem) {
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return {

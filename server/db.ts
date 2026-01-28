@@ -111,6 +111,12 @@ export async function getUserProblems(userId: number) {
   return db.select().from(problems).where(eq(problems.userId, userId)).orderBy(desc(problems.createdAt));
 }
 
+export async function getAllProblems() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(problems).orderBy(desc(problems.createdAt));
+}
+
 // User progress queries
 export async function getOrCreateProgress(userId: string, problemId: number) {
   const db = await getDb();

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { BookOpen, Sparkles, BarChart3 } from "lucide-react";
+import { BookOpen, Sparkles, BarChart3, Upload } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -11,6 +11,7 @@ export default function Home() {
   const { data: problems, isLoading: problemsLoading } = trpc.problem.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { data: authUser } = trpc.auth.me.useQuery();
 
   if (loading) {
     return (
@@ -100,6 +101,14 @@ export default function Home() {
                 学习进度
               </Button>
             </Link>
+            {authUser && authUser.role === "admin" && (
+              <Link href="/admin/upload">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Upload className="w-4 h-4" />
+                  上传题目
+                </Button>
+              </Link>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -129,7 +138,7 @@ export default function Home() {
           </div>
         ) : problems && problems.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {problems.map((problem) => (
+              {problems.map((problem: any) => (
               <Link key={problem.id} href={`/problem/${problem.id}`}>
                 <Card className="step-card h-full">
                   <CardHeader>

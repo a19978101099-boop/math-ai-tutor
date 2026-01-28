@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Progress from "./pages/Progress";
+import AdminUpload from "./pages/AdminUpload";
 import ProblemDetail from "./pages/ProblemDetail";
 
 function Router() {
@@ -13,7 +14,8 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/progress"} component={Progress} />
+        <Route path="/progress" component={Progress} />
+        <Route path="/admin/upload" component={AdminUpload} />
       <Route path={"/problem/:id"} component={ProblemDetail} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
