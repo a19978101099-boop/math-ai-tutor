@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, title FROM problems ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user CpukH5rjPkny7dW.root --database C5wzA5LwhnXBKwVJaMeftJ --execute SELECT id, title FROM problems ORDER BY id;",
+  "rows": [
+    {
+      "id": "30001",
+      "title": "题目7：坐标变换与斜率计算"
+    },
+    {
+      "id": "30002",
+      "title": "题目8：三角形全等证明与角度计算"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\n30001\t题目7：坐标变换与斜率计算\n30002\t题目8：三角形全等证明与角度计算\n",
+  "stderr": "",
+  "execution_time_ms": 1490
+}
