@@ -32,6 +32,7 @@ export default function ProblemDetail() {
 
   const handleStepClick = (stepId: string) => {
     setSelectedStepId(stepId);
+    setSelectedCondition(null); // 清除条件选中
     setSelectedText("");
     setCurrentHint("");
     setIsMobileDrawerOpen(true);
@@ -77,6 +78,7 @@ export default function ProblemDetail() {
     setSelectedCondition(condition);
     setSelectedStepId(null); // 清除步骤选中
     setSelectedText("");
+    setCurrentHint(""); // 清除旧的提示
     setIsMobileDrawerOpen(true);
 
     try {

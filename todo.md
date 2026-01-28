@@ -83,3 +83,12 @@
 - [x] 修复点击步骤后 AI 提示不显示的问题（将 hint API 改为 publicProcedure）
 - [x] 检查浏览器控制台错误日志
 - [x] 验证 hint API 调用是否正常
+
+## Bug 修复 - 步骤点击显示错误
+- [ ] 修复点击步骤后右侧显示条件而不是步骤的问题
+- [ ] 检查 ProblemDetail.tsx 中的状态管理逻辑
+- [ ] 确保点击步骤时清除 selectedCondition 状态
+
+## Bug 修复 - 状态切换问题
+- [x] 修复点击步骤时没有清除 selectedCondition 状态的问题
+- [x] 修复点击条件时没有清除 currentHint 状态的问题
