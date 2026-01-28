@@ -100,12 +100,12 @@ export const appRouter = router({
         const messages: LLMMessage[] = [
           {
             role: "system",
-            content: "你是一个数学题目分析助手。你的任务是从题目和答案图片中提取：1) 中文题目文字：提取题目图片中的所有中文内容，数学公式使用 LaTeX 格式（用 $ 包裹）。 2) 英文题目文字：提取题目图片中的所有英文内容，数学公式使用 LaTeX 格式（用 $ 包裹）。 3) 已知条件：题目中明确给出的条件，如角度相等、边长相等、平行关系等，使用 LaTeX 格式。 4) 解题步骤：从答案中提取每一步的推理过程，使用 LaTeX 格式表示数学公式。所有数学符号必须使用 LaTeX 格式，用 $ 包裹。",
+            content: "你是一个专业的 DSE 数学题目分析助手。\n\n重要：所有数学符号、公式、变量必须使用 LaTeX 格式，用 $ 包裹。\n\n你的任务：\n1. 中文题目文字：提取题目图片中的所有中文内容。所有数学符号必须用 $ 包裹，例如：$\\angle ABC$、$\\triangle ABC$、$AB \\parallel CD$、$AB = AE$、$\\cong$。\n2. 英文题目文字：提取题目图片中的所有英文内容。所有数学符号必须用 $ 包裹。\n3. 已知条件：提取题目中明确给出的条件（角度、边长、平行、全等等），每个条件是一个独立的字符串，数学符号用 $ 包裹。\n4. 解题步骤：从答案图片中提取每一步的推理过程，数学符号用 $ 包裹。\n\nLaTeX 格式示例：\n- 角度：$\\angle ABC = 39°$\n- 三角形：$\\triangle ABC$\n- 平行：$AC \\parallel ED$\n- 全等：$\\triangle ABC \\cong \\triangle AED$\n- 变量：$A$、$BCDE$、$S'$、$T'$",
           },
         ];
 
         const userContent: MessageContent[] = [
-          { type: "text", text: "请从以下图片中提取：1) 中文题目文字（完整内容，数学公式用 LaTeX）；2) 英文题目文字（完整内容，数学公式用 LaTeX）；3) 所有已知条件；4) 解题步骤。" },
+          { type: "text", text: "请从以下图片中提取：\n1. 中文题目文字（完整内容，所有数学符号用 $ 包裹）\n2. 英文题目文字（完整内容，所有数学符号用 $ 包裹）\n3. 所有已知条件（每个条件是一个独立的字符串）\n4. 解题步骤（每一步的推理过程）\n\n注意：必须使用 LaTeX 格式，例如 $\\angle ABC$、$\\triangle ABC$、$AB \\parallel CD$。" },
         ];
 
         if (input.problemImageUrl) {

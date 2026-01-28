@@ -299,6 +299,36 @@ export default function AdminUpload() {
                 <CardDescription>请检查 AI 提取的步骤和已知条件</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Problem Text - Chinese */}
+                <div className="space-y-2">
+                  <Label htmlFor="problemText">中文题目文字</Label>
+                  <Textarea
+                    id="problemText"
+                    value={extractedData.problemText}
+                    onChange={(e) => setExtractedData({ ...extractedData, problemText: e.target.value })}
+                    className="bg-slate-800/50 border-slate-700 min-h-[100px] font-mono text-sm"
+                    placeholder="请输入中文题目文字，数学符号用 $ 包裹"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    注意：数学符号必须用 $ 包裹，例如：$\angle ABC$、$\triangle ABC$、$AB \parallel CD$
+                  </p>
+                </div>
+
+                {/* Problem Text - English */}
+                <div className="space-y-2">
+                  <Label htmlFor="problemTextEn">English Question Text</Label>
+                  <Textarea
+                    id="problemTextEn"
+                    value={extractedData.problemTextEn}
+                    onChange={(e) => setExtractedData({ ...extractedData, problemTextEn: e.target.value })}
+                    className="bg-slate-800/50 border-slate-700 min-h-[100px] font-mono text-sm"
+                    placeholder="Enter English question text, wrap math symbols with $"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Note: Math symbols must be wrapped with $, e.g.: $\angle ABC$, $\triangle ABC$, $AB \parallel CD$
+                  </p>
+                </div>
+
                 {/* Conditions */}
                 {extractedData.conditions.length > 0 && (
                   <div className="space-y-2">
