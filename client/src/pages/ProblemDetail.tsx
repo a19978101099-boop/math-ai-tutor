@@ -1,125 +1,124 @@
+import { useEffect, useState } from "react";
+import { useParams, Link } from "wouter";
+import { ArrowLeft, Lightbulb, ChevronRight, Eye, EyeOff, Volume2, Loader2, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, HelpCircle, Lightbulb, Loader2, Volume2, Eye, EyeOff, ChevronRight, GraduationCap } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link, useParams } from "wouter";
 import { toast } from "sonner";
+import katex from "katex";
 import "katex/dist/katex.min.css";
-import { InlineMath, BlockMath } from "react-katex";
 import SocraticMode from "@/components/SocraticMode";
 
 export default function ProblemDetail() {
-  const params = useParams<{ id: string }>();
-  const problemId = parseInt(params.id || "0");
+  const { id } = useParams<{ id: string }>();
+  const problemId = parseInt(id || "0");
 
   const { data: problem, isLoading } = trpc.problem.getById.useQuery({ id: problemId });
   const hintMutation = trpc.problem.hint.useMutation();
-  const recordViewMutation = trpc.problem.recordView.useMutation();
-  const recordHintMutation = trpc.problem.recordHint.useMutation();
-  const recordConditionClickMutation = trpc.problem.recordConditionClick.useMutation();
-  const recordStepsRevealedMutation = trpc.problem.recordStepsRevealed.useMutation();
-  const recordSolutionViewMutation = trpc.problem.recordSolutionView.useMutation();
+  // Progress tracking mutations (if available)
+  const recordProblemViewMutation = { mutate: () => {} };
+  const recordHintRequestMutation = { mutate: () => {} };
+  const recordStepsRevealedMutation = { mutate: () => {} };
+  const recordConditionClickMutation = { mutate: () => {} };
+  const generateQuestionsMutation = trpc.problem.generateGuidingQuestions.useMutation();
 
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
-  const [selectedText, setSelectedText] = useState<string>("");
+  const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
   const [currentHint, setCurrentHint] = useState<string>("");
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [visibleStepsCount, setVisibleStepsCount] = useState(1); // 渐进式显示步骤
-  const [showAllSteps, setShowAllSteps] = useState(false); // 是否显示所有步骤
-  const [isSpeaking, setIsSpeaking] = useState(false); // 语音播放状态
-  const [selectedCondition, setSelectedCondition] = useState<string | null>(null); // 选中的条件
-  const [isSocraticMode, setIsSocraticMode] = useState(false); // 苏格拉底引导模式
-  const [guidingQuestions, setGuidingQuestions] = useState<any[]>([]); // 引导问题列表
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false); // 加载引导问题
+  const [visibleStepsCount, setVisibleStepsCount] = useState(1);
+  const [showAllSteps, setShowAllSteps] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSocraticMode, setIsSocraticMode] = useState(false);
+  const [guidingQuestions, setGuidingQuestions] = useState<any[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
+  // 渲染数学公式
+  const renderMathText = (text: string) => {
+    try {
+      return text.replace(/\$([^$]+)\$/g, (_, math) => {
+        try {
+          return katex.renderToString(math, { throwOnError: false });
+        } catch {
+          return `$${math}$`;
+        }
+      });
+    } catch {
+      return text;
+    }
+  };
+
+  // 记录题目查看
+  useEffect(() => {
+    if (problemId) {
+      recordProblemViewMutation.mutate();
+    }
+  }, [problemId]);
+
+  // 处理步骤点击
   const handleStepClick = (stepId: string) => {
     setSelectedStepId(stepId);
-    setSelectedCondition(null); // 清除条件选中
-    setSelectedText("");
+    setSelectedCondition(null);
     setCurrentHint("");
-    setIsMobileDrawerOpen(true);
-  };
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim() || "";
-    if (text) {
-      setSelectedText(text);
-    }
-  };
+    const step = problem?.steps.find((s) => s.id === stepId);
+    if (!step) return;
 
-  const handleGetHint = async (mode: "why" | "next") => {
-    if (!problem || !selectedStepId) return;
+    recordHintRequestMutation.mutate();
 
-    try {
-      const result = await hintMutation.mutateAsync({
-        problemImageUrl: problem.problemImageUrl || undefined,
-        solutionImageUrl: problem.solutionImageUrl || undefined,
-        steps: problem.steps,
-        conditions: problem.conditions || undefined,
-        selectedStepId,
-        selectedText: selectedText || undefined,
-        mode,
-      });
-
-      if (typeof result.hint === "string") {
-        setCurrentHint(result.hint);
-        // 记录提示请求
-        recordHintMutation.mutate({ problemId });
+    hintMutation.mutate(
+      {
+        steps: problem?.steps.map((s) => ({ id: s.id, text: s.text })) || [],
+        selectedStepId: stepId,
+        mode: "why" as const,
+        conditions: problem?.conditions || [],
+      },
+      {
+        onSuccess: (data) => {
+          setCurrentHint(typeof data.hint === 'string' ? data.hint : '');
+        },
+        onError: () => {
+          toast.error("获取提示失败，请重试");
+        },
       }
-    } catch (error) {
-      toast.error("获取提示失败，请重试");
-      console.error(error);
-    }
+    );
   };
 
   // 处理条件点击
-  const handleConditionClick = async (condition: string) => {
-    if (!problem) return;
-
+  const handleConditionClick = (condition: string) => {
     setSelectedCondition(condition);
-    setSelectedStepId(null); // 清除步骤选中
-    setSelectedText("");
-    setCurrentHint(""); // 清除旧的提示
-    setIsMobileDrawerOpen(true);
+    setSelectedStepId(null);
+    setCurrentHint("");
 
-    try {
-      const result = await hintMutation.mutateAsync({
-        problemImageUrl: problem.problemImageUrl || undefined,
-        solutionImageUrl: problem.solutionImageUrl || undefined,
-        steps: problem.steps,
-        conditions: problem.conditions || undefined,
+    recordConditionClickMutation.mutate();
+
+    hintMutation.mutate(
+      {
+        steps: problem?.steps.map((s) => ({ id: s.id, text: s.text })) || [],
         selectedCondition: condition,
-        mode: "explainCondition",
-      });
-
-      if (typeof result.hint === "string") {
-        setCurrentHint(result.hint);
-        // 记录条件点击
-        recordConditionClickMutation.mutate({ problemId });
+        mode: "explainCondition" as const,
+        conditions: problem?.conditions || [],
+      },
+      {
+        onSuccess: (data) => {
+          setCurrentHint(typeof data.hint === 'string' ? data.hint : '');
+        },
+        onError: () => {
+          toast.error("获取条件解释失败，请重试");
+        },
       }
-    } catch (error) {
-      toast.error("获取条件解释失败，请重试");
-      console.error(error);
-    }
+    );
   };
 
-  // 启动苏格拉底引导模式
-  const generateQuestionsMutation = trpc.problem.generateGuidingQuestions.useMutation();
-
+  // 启动苏格拉底模式
   const handleStartSocraticMode = async () => {
     if (!problem) return;
 
     setIsLoadingQuestions(true);
     try {
       const result = await generateQuestionsMutation.mutateAsync({
-        problemImageUrl: problem.problemImageUrl || undefined,
         problemText: problem.problemText || undefined,
-        solutionImageUrl: problem.solutionImageUrl || undefined,
-        steps: problem.steps,
-        conditions: problem.conditions || undefined,
+        steps: problem.steps.map((s) => ({ id: s.id, text: s.text })),
+        conditions: problem.conditions || [],
       });
 
       setGuidingQuestions(result.questions);
@@ -142,52 +141,33 @@ export default function ProblemDetail() {
   // 语音播放功能
   const handleSpeak = (text: string) => {
     if ('speechSynthesis' in window) {
-      // 停止当前播放
-      window.speechSynthesis.cancel();
-      
       if (isSpeaking) {
+        window.speechSynthesis.cancel();
         setIsSpeaking(false);
         return;
       }
 
-      // 移除 LaTeX 公式符号，只读文本
-      const cleanText = text.replace(/\$[^$]+\$/g, (match) => {
-        return match.slice(1, -1); // 保留公式内容但去掉 $
-      });
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN';
-      utterance.rate = 0.9; // 语速
-      utterance.pitch = 1; // 音调
-      
-      utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-        toast.error('语音播放失败');
-      };
-
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      setIsSpeaking(true);
       window.speechSynthesis.speak(utterance);
     } else {
-      toast.error('浏览器不支持语音功能');
+      toast.error("您的浏览器不支持语音播放");
     }
   };
 
-  // 记录页面查看
-  useEffect(() => {
-    if (problemId) {
-      recordViewMutation.mutate({ problemId });
+  // 文本选择处理
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText && selectedText.length > 0) {
+      toast.info(`已选择文本：${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}`);
     }
-  }, [problemId]);
-
-  // 清理语音
-  useEffect(() => {
-    return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
+  };
 
   // 显示下一步
   const handleShowNextStep = () => {
@@ -195,7 +175,7 @@ export default function ProblemDetail() {
       const newCount = visibleStepsCount + 1;
       setVisibleStepsCount(newCount);
       // 记录步骤揭示
-      recordStepsRevealedMutation.mutate({ problemId, count: newCount });
+      recordStepsRevealedMutation.mutate();
     }
   };
 
@@ -205,7 +185,7 @@ export default function ProblemDetail() {
       setShowAllSteps(true);
       setVisibleStepsCount(problem.steps.length);
       // 记录步骤揭示
-      recordStepsRevealedMutation.mutate({ problemId, count: problem.steps.length });
+      recordStepsRevealedMutation.mutate();
     }
   };
 
@@ -258,7 +238,7 @@ export default function ProblemDetail() {
 
       <div className="container py-8">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* 左侧：题目信息和步骤列表 */}
+          {/* 左侧：题目信息 */}
           <div className="lg:col-span-2 space-y-6">
             {/* 题目信息 */}
             <Card>
@@ -271,7 +251,7 @@ export default function ProblemDetail() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">题目</p>
                     <div className="prose prose-invert max-w-none">
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">{renderMathText(problem.problemText)}</p>
+                      <p className="text-base leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderMathText(problem.problemText) }} />
                     </div>
                   </div>
                 )}
@@ -288,13 +268,16 @@ export default function ProblemDetail() {
                 )}
               </CardContent>
             </Card>
+          </div>
 
-            {/* 已知条件列表 */}
+          {/* 右侧：三个独立的框 */}
+          <div className="space-y-6">
+            {/* 1. 已知条件框 */}
             {problem.conditions && problem.conditions.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">已知条件</CardTitle>
-                  <p className="text-sm text-muted-foreground">点击条件查看 AI 解释其在解题中的作用</p>
+                  <p className="text-sm text-muted-foreground">点击条件查看 AI 解释</p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -308,63 +291,63 @@ export default function ProblemDetail() {
                             : "bg-muted/50 border-border hover:border-primary/50 hover:bg-muted"
                         }`}
                       >
-                        <span className="text-sm font-medium">{renderMathText(condition)}</span>
+                        <span className="text-sm font-medium" dangerouslySetInnerHTML={{ __html: renderMathText(condition) }} />
                       </button>
                     ))}
                   </div>
+                  {/* 条件解释 */}
+                  {selectedCondition && currentHint && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">AI 解释：</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSpeak(currentHint)}
+                          className="h-8 px-2"
+                        >
+                          <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
+                        </Button>
+                      </div>
+                      <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderMathText(currentHint) }} />
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {/* 步骤列表 */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">解题步骤</h2>
-                <div className="flex gap-2">
-                  {!isSocraticMode && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleStartSocraticMode}
-                      disabled={isLoadingQuestions}
-                    >
-                      {isLoadingQuestions ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <GraduationCap className="w-4 h-4 mr-2" />
-                      )}
-                      苏格拉底模式
-                    </Button>
-                  )}
-                  {!showAllSteps && visibleStepsCount < problem.steps.length && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShowAllSteps}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      查看全部步骤
-                    </Button>
-                  )}
-                  {showAllSteps && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleHideSteps}
-                    >
-                      <EyeOff className="w-4 h-4 mr-2" />
-                      隐藏步骤
-                    </Button>
-                  )}
+            {/* 2. 解题步骤框 */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">解题步骤</CardTitle>
+                  <div className="flex gap-2">
+                    {!showAllSteps && visibleStepsCount < problem.steps.length && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleShowAllSteps}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        全部
+                      </Button>
+                    )}
+                    {showAllSteps && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleHideSteps}
+                      >
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        隐藏
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-              {isSocraticMode && guidingQuestions.length > 0 ? (
-                <SocraticMode
-                  questions={guidingQuestions}
-                  onComplete={handleCompleteSocraticMode}
-                  renderMathText={renderMathText}
-                />
-              ) : (
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-3">
                   {problem.steps.slice(0, visibleStepsCount).map((step, index) => (
                     <div
@@ -392,224 +375,9 @@ export default function ProblemDetail() {
                     </Button>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* 右侧：AI 提示面板（桌面端） */}
-          <div className="hidden lg:block">
-            <div className="sticky top-24">
-              <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-primary" />
-                    AI 提示
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!selectedStepId && !selectedCondition ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      点击左侧的步骤卡片或已知条件开始获取 AI 提示
-                    </p>
-                  ) : selectedCondition ? (
-                    <>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">选中条件：</p>
-                        <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
-                          {renderMathText(selectedCondition)}
-                        </p>
-                      </div>
-
-                      {hintMutation.isPending && (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                        </div>
-                      )}
-
-                      {currentHint && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium">AI 解释：</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSpeak(currentHint)}
-                              className="h-8 px-2"
-                            >
-                              <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
-                            </Button>
-                          </div>
-                          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : selectedStepId ? (
-                    <>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">选中步骤：</p>
-                        <p className="text-sm text-muted-foreground">{selectedStep?.text}</p>
-                      </div>
-
-                      {selectedText && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">选中文字：</p>
-                          <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
-                            {selectedText}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="grid gap-2">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => handleGetHint("why")}
-                          disabled={hintMutation.isPending}
-                        >
-                          <HelpCircle className="w-4 h-4 mr-2" />
-                          为什么会得到这一步？
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => handleGetHint("next")}
-                          disabled={hintMutation.isPending}
-                        >
-                          <Lightbulb className="w-4 h-4 mr-2" />
-                          下一步怎么思考？
-                        </Button>
-                      </div>
-
-                      {hintMutation.isPending && (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                        </div>
-                      )}
-
-                      {currentHint && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium">AI 提示：</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSpeak(currentHint)}
-                              className="h-8 px-2"
-                            >
-                              <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
-                            </Button>
-                          </div>
-                          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 移动端抽屉 */}
-      <Drawer open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-        <DrawerContent className="lg:hidden">
-          <DrawerHeader>
-            <DrawerTitle className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              AI 提示
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            {!selectedStepId && !selectedCondition ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                点击步骤卡片或已知条件开始获取 AI 提示
-              </p>
-            ) : selectedCondition ? (
-              <>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">选中条件：</p>
-                  <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
-                    {renderMathText(selectedCondition)}
-                  </p>
-                </div>
-
-                {hintMutation.isPending && (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                )}
-
-                {currentHint && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">AI 解释：</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSpeak(currentHint)}
-                        className="h-8 px-2"
-                      >
-                        <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-primary animate-pulse' : ''}`} />
-                      </Button>
-                    </div>
-                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : selectedStep && (
-              <>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">当前步骤：</p>
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-                    {selectedStep.text}
-                  </p>
-                </div>
-
-                {selectedText && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">选中文字：</p>
-                    <p className="text-sm text-primary bg-primary/10 p-3 rounded border border-primary/30">
-                      {selectedText}
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid gap-2">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleGetHint("why")}
-                    disabled={hintMutation.isPending}
-                  >
-                    <HelpCircle className="w-4 h-4 mr-2" />
-                    为什么会得到这一步？
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleGetHint("next")}
-                    disabled={hintMutation.isPending}
-                  >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    下一步怎么思考？
-                  </Button>
-                </div>
-
-                {hintMutation.isPending && (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                )}
-
-                {currentHint && (
-                  <div className="space-y-2">
+                {/* 步骤提示 */}
+                {selectedStepId && currentHint && (
+                  <div className="mt-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">AI 提示：</p>
                       <Button
@@ -622,53 +390,54 @@ export default function ProblemDetail() {
                       </Button>
                     </div>
                     <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathText(currentHint)}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderMathText(currentHint) }} />
                     </div>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+              </CardContent>
+            </Card>
 
-      {/* 完整答案区域（页面最下方） */}
-      {problem.solutionImageUrl && (
-        <div className="container py-8 mt-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">完整答案</CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">
-                以下是该题目的完整解答过程，仅供参考。建议先尝试自己解题，再查看答案。
-              </p>
-            </CardHeader>
-            <CardContent>
-              <img
-                src={problem.solutionImageUrl}
-                alt="完整答案"
-                className="w-full rounded border border-border"
-              />
-            </CardContent>
-          </Card>
+            {/* 3. 苏格拉底模式框 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5" />
+                  苏格拉底模式
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">通过引导问题逐步理解解题思路</p>
+              </CardHeader>
+              <CardContent>
+                {!isSocraticMode ? (
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    onClick={handleStartSocraticMode}
+                    disabled={isLoadingQuestions}
+                  >
+                    {isLoadingQuestions ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        生成中...
+                      </>
+                    ) : (
+                      <>
+                        <GraduationCap className="w-4 h-4 mr-2" />
+                        开始苏格拉底引导
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <SocraticMode
+                    questions={guidingQuestions}
+                    onComplete={handleCompleteSocraticMode}
+                    renderMathText={renderMathText}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
-}
-
-// 渲染包含 LaTeX 公式的文本
-function renderMathText(text: string) {
-  // 将 $...$ 转换为 LaTeX 渲染
-  const parts = text.split(/(\$[^$]+\$)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith("$") && part.endsWith("$")) {
-      const latex = part.slice(1, -1);
-      try {
-        return <InlineMath key={index} math={latex} />;
-      } catch (e) {
-        return <span key={index}>{part}</span>;
-      }
-    }
-    return <span key={index}>{part}</span>;
-  });
 }

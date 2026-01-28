@@ -353,26 +353,11 @@ ${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
           },
         ];
 
-        const userContent: MessageContent[] = [
-          { type: "text", text: `题目信息：\n${input.problemText || "无文字描述"}\n\n已知条件：\n${input.conditions?.join("\n") || "无"}\n\n解题步骤：\n${input.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\n请生成 3-5 个引导问题，帮助学生逐步理解和推导出这些步骤。` },
-        ];
+        const userText = `题目信息：\n${input.problemText || "无文字描述"}\n\n已知条件：\n${input.conditions?.join("\n") || "无"}\n\n解题步骤：\n${input.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}\n\n请生成 3-5 个引导问题，帮助学生逐步理解和推导出这些步骤。`;
 
-        if (input.problemImageUrl) {
-          userContent.push({
-            type: "image_url",
-            image_url: { url: input.problemImageUrl },
-          });
-        }
+        messages.push({ role: "user", content: userText });
 
-        if (input.solutionImageUrl) {
-          userContent.push({
-            type: "image_url",
-            image_url: { url: input.solutionImageUrl },
-          });
-        }
-
-        messages.push({ role: "user", content: userContent });
-
+        console.log("[DEBUG] Calling LLM for guiding questions...");
         const response = await invokeLLM({
           messages: messages as any,
           response_format: {
@@ -409,7 +394,10 @@ ${input.steps.map((s, idx) => `${idx + 1}. ${s.text}`).join("\n")}
           },
         });
 
+        console.log("[DEBUG] LLM response:", JSON.stringify(response, null, 2));
+
         if (!response || !response.choices || response.choices.length === 0) {
+          console.error("[ERROR] LLM response has no choices:", response);
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM 返回结构异常" });
         }
 
